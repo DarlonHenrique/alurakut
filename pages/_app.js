@@ -11,7 +11,10 @@ const GlobalStyle = createGlobalStyle`
   }
   body {
     font-family: sans-serif;
-    background-color: #D9E6F6;
+    background-image: url("https://wallpapercave.com/wp/wp5683329.jpg");
+    background-size: cover;
+    background-position: center;
+    backdrop-filter: blur(3px);
   }
   #__next {
     display: flex;
