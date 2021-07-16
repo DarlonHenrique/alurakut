@@ -13,43 +13,60 @@ import ProfileSidebar from '../src/components/ProfileSidebar'
 export default function Home() {
 
   // using state for add community on the array communities
-  const [communities, setCommunities] = React.useState([{
-    id: '1827633281329481234',
-    title: 'eu odeio acordar cedo',
-    image: 'https://www.socialdub.com/groupspictures/7700/77001444150335401430.jpg?x2'
-  }]);
+  const [communities, setCommunities] = React.useState([]);
 
+  // My github user, used for my ProfileSidebar and Photo
   const githubUser = 'darlonhenrique';
 
+  // Array to set te people on ProfileRelationsArea
   const people = [
     'akitaonrails', 'peas',
     'maykbrito', 'gunnarcorrea',
     'omariosouto', 'filipedeschamps'
   ]
 
+  /* ----- Using State and Effect to ser followers taking from github API ----- */
   const [followers, setFollowers] = React.useState([]);
 
   React.useEffect(() => {
     fetch('https://api.github.com/users/peas/followers')
-    .then((serverResponse) => {
-      return serverResponse.json();
+      .then((serverResponse) => {
+        return serverResponse.json();
+      })
+      .then((completeResponse) => {
+        setFollowers(completeResponse);
+      })
+
+    fetch('https://graphql.datocms.com/', {
+      method: 'POST',
+      headers: {
+        'Authorization': '2bac4315c85f0031063e13472e48a4',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+
+      },
+      body: JSON.stringify({
+        "query": `query {
+        allCommunities {
+          id 
+          title
+          imageUrl
+          creatorSlug
+        }
+      }` })
     })
-    .then((completeResponse) => {
-      setFollowers(completeResponse);
-    })
+      .then((response) => response.json())
+      .then((completeResponse) => {
+        const datoCommunities = completeResponse.data.allCommunities;
+        setCommunities(datoCommunities)
+      })
   }, [])
 
-  /* ---------------------------- Displayed Content --------------------------- */
-
-  return (
+  return ( /* ---------------------------- Rendering Content --------------------------- */
     <>
-
-      {/* Menu for mobile version */}
-      <AlurakutMenu />
-
+      <AlurakutMenu githubUser={githubUser} />
       <MainGrid>
-
-        {/* -------------------------- Profile Area Column Redering -------------------------- */}
+        {/* ---------------------- Profile Area Column Redering ---------------------- */}
         <div className="profileArea" style={{ gridArea: 'profileArea' }}>
           <ProfileSidebar githubUser={githubUser} />
         </div>
@@ -73,18 +90,26 @@ export default function Home() {
               e.preventDefault();
 
               /* get create community infos */
-              const communityData = new FormData(e.target)
+              const newCommunity = new FormData(e.target)
               const community = {
-
-                id: new Date().toISOString(),
-                title: communityData.get('title'),
-                image: communityData.get('image')
+                title: newCommunity.get('title'),
+                imageUrl: newCommunity.get('image'),
+                creatorSlug: githubUser
               }
 
-              /* -------------------------- updateCommunities ------------------------- */
-
-              setCommunities([...communities, community])
-
+              fetch('/api/communities', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(community)
+              })
+              .then(async (response) => {
+                const dados = await response.json();
+                console.log(dados.createdRecord);
+                const community = dados.createdRecord;
+                setCommunities([...communities, community])
+              })
             }}>
 
               {/* ------------------------------- Form Inputs ------------------------------ */}
@@ -126,8 +151,8 @@ export default function Home() {
               {communities.map((community) => {
                 return (
                   <li key={community.id}>
-                    <a href={`/users/${community.title}`}>
-                      <img src={community.image} />
+                    <a href={`/communities/${community.id}`}>
+                      <img src={community.imageUrl} />
                       <span>{community.title}</span>
                     </a>
                   </li>
@@ -156,7 +181,6 @@ export default function Home() {
             </ul>
           </ProfileRelationsBoxWrapper>
         </div>
-
       </MainGrid>
     </>
   )

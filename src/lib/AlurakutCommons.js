@@ -213,7 +213,7 @@ export function AlurakutProfileSidebarMenuDefault() {
           </a>
         <a href="/logout">
           <img src={`${BASE_URL}//icons/logout.svg`} />
-            Sair
+            Quit
           </a>
       </nav>
     </AlurakutProfileSidebarMenuDefault.Wrapper>
