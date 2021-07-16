@@ -1,4 +1,6 @@
 import React from 'react'
+import nookies from 'nookies'
+import jwt from 'jsonwebtoken'
 import MainGrid from '../src/components/MainGrid'
 import Box from '../src/components/Box'
 import { AlurakutMenu, OrkutNostalgicIconSet, AlurakutProfileSidebarMenuDefault } from '../src/lib/AlurakutCommons'
@@ -10,13 +12,12 @@ import ProfileSidebar from '../src/components/ProfileSidebar'
 /*                                    Home                                    */
 /* -------------------------------------------------------------------------- */
 
-export default function Home() {
-
+export default function Home(props) {
   // using state for add community on the array communities
   const [communities, setCommunities] = React.useState([]);
 
-  // My github user, used for my ProfileSidebar and Photo
-  const githubUser = 'darlonhenrique';
+  // // My github user, used for my ProfileSidebar and Photo
+  const githubUser = props.githubUser;
 
   // Array to set te people on ProfileRelationsArea
   const people = [
@@ -104,12 +105,12 @@ export default function Home() {
                 },
                 body: JSON.stringify(community)
               })
-              .then(async (response) => {
-                const dados = await response.json();
-                console.log(dados.createdRecord);
-                const community = dados.createdRecord;
-                setCommunities([...communities, community])
-              })
+                .then(async (response) => {
+                  const dados = await response.json();
+                  console.log(dados.createdRecord);
+                  const community = dados.createdRecord;
+                  setCommunities([...communities, community])
+                })
             }}>
 
               {/* ------------------------------- Form Inputs ------------------------------ */}
@@ -184,4 +185,38 @@ export default function Home() {
       </MainGrid>
     </>
   )
+}
+
+export async function getServerSideProps(context) {
+  const cookies = nookies.get(context)
+  console.log('cookies: ', cookies)
+  const token = cookies.USER_TOKEN
+  const { githubUser } = jwt.decode(token)
+
+
+  const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+    headers: {
+      Authorization: token
+    }
+  })
+    .then((response) => {
+      return response.json()
+    })
+
+  console.log('isAuthenticated ', isAuthenticated)
+  
+  if(!isAuthenticated) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      }
+    }
+  }
+
+  return {
+    props: {
+      githubUser
+    },
+  }
 }
