@@ -204,8 +204,8 @@ export async function getServerSideProps(context) {
     })
 
   console.log('isAuthenticated ', isAuthenticated)
-  
-  if(!isAuthenticated) {
+
+  if (!isAuthenticated) {
     return {
       redirect: {
         destination: '/login',
